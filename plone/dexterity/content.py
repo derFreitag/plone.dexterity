@@ -19,6 +19,7 @@ from plone.dexterity.interfaces import IDexterityContent
 from plone.dexterity.interfaces import IDexterityItem
 from plone.dexterity.schema import SCHEMA_CACHE
 from plone.dexterity.utils import all_merged_tagged_values_dict
+from plone.dexterity.utils import default_from_schema
 from plone.dexterity.utils import datify
 from plone.dexterity.utils import iterSchemata
 from plone.dexterity.utils import safe_unicode
@@ -46,11 +47,11 @@ from zope.interface.declarations import getObjectSpecification
 from zope.interface.declarations import implementedBy
 from zope.interface.declarations import Implements
 from zope.interface.declarations import ObjectSpecificationDescriptor
-from zope.schema.interfaces import IContextAwareDefaultFactory
 from zope.security.interfaces import IPermission
 
 import six
 import threading
+import os
 
 
 _marker = object()
@@ -74,24 +75,6 @@ ATTRIBUTE_NAMES_TO_IGNORE = (
 )
 
 ASSIGNABLE_CACHE_KEY = '__plone_dexterity_assignable_cache__'
-
-
-def _default_from_schema(context, schema, fieldname):
-    """helper to lookup default value of a field
-    """
-    if schema is None:
-        return _marker
-    field = schema.get(fieldname, None)
-    if field is None:
-        return _marker
-    default_factory = getattr(field, 'defaultFactory', None)
-    if (
-        # check for None to avoid one expensive providedBy (called often)
-        default_factory is not None and
-        IContextAwareDefaultFactory.providedBy(default_factory)
-    ):
-        return deepcopy(field.bind(context).default)
-    return deepcopy(field.default)
 
 
 def get_assignable(context):
@@ -366,9 +349,9 @@ class DexterityContent(DAVResourceMixin, PortalContent, PropertyManager,
         for (k, v) in kwargs.items():
             setattr(self, k, v)
 
-    def __getattr__(self, name):
-        # python basics:  __getattr__ is only invoked if the attribute wasn't
-        # found by __getattribute__
+    def __getattr_default__(self, name):
+        # python basics:  __getattr__ is only invoked if the attribute
+        # wasn't found by __getattribute__
         #
         # optimization: sometimes we're asked for special attributes
         # such as __conform__ that we can disregard (because we
@@ -385,12 +368,13 @@ class DexterityContent(DAVResourceMixin, PortalContent, PropertyManager,
         ):
             raise AttributeError(name)
 
-        # attribute was not found; try to look it up in the schema and return
-        # a default
-        value = _default_from_schema(
+        # attribute was not found; try to look it up in the schema and
+        # return a default
+        value = default_from_schema(
             self,
             SCHEMA_CACHE.get(self.portal_type),
-            name
+            name,
+            default=_marker
         )
         if value is not _marker:
             return value
@@ -400,15 +384,19 @@ class DexterityContent(DAVResourceMixin, PortalContent, PropertyManager,
         if assignable is not None:
             for behavior_registration in assignable.enumerateBehaviors():
                 if behavior_registration.interface:
-                    value = _default_from_schema(
+                    value = default_from_schema(
                         self,
                         behavior_registration.interface,
-                        name
+                        name,
+                        default=_marker
                     )
                     if value is not _marker:
                         return value
 
         raise AttributeError(name)
+
+    if not os.environ.get('DEXTERITY_WITHOUT_GETATTR'):
+        __getattr__ = __getattr_default__
 
     # Let __name__ and id be identical. Note that id must be ASCII in Zope 2,
     # but __name__ should be unicode. Note that setting the name to something
@@ -724,8 +712,9 @@ class Item(PasteBehaviourMixin, BrowserDefaultMixin, DexterityContent):
         'action': 'view',
     },) + CMFCatalogAware.manage_options + SimpleItem.manage_options
 
-    # Be explicit about which __getattr__ to use
-    __getattr__ = DexterityContent.__getattr__
+    if not os.environ.get('DEXTERITY_WITHOUT_GETATTR'):
+        # Be explicit about which __getattr__ to use
+        __getattr__ = DexterityContent.__getattr__
 
 
 @implementer(IDexterityContainer)
@@ -766,14 +755,18 @@ class Container(
         CMFOrderedBTreeFolderBase.__init__(self, id)
         DexterityContent.__init__(self, id, **kwargs)
 
-    def __getattr__(self, name):
-        try:
-            return DexterityContent.__getattr__(self, name)
-        except AttributeError:
-            pass
+    if not os.environ.get('DEXTERITY_WITHOUT_GETATTR'):
+        def __getattr__(self, name):
+            try:
+                return DexterityContent.__getattr__(self, name)
+            except AttributeError:
+                pass
 
+            # Be specific about the implementation we use
+            return CMFOrderedBTreeFolderBase.__getattr__(self, name)
+    else:
         # Be specific about the implementation we use
-        return CMFOrderedBTreeFolderBase.__getattr__(self, name)
+        __getattr__ = CMFOrderedBTreeFolderBase.__getattr__
 
     @security.protected(permissions.DeleteObjects)
     def manage_delObjects(self, ids=None, REQUEST=None):
