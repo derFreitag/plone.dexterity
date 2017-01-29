@@ -13,6 +13,11 @@
       permission="zope2.View"
       />
 
+    <adapter
+        factory=".view.DefaultViewDefaultValueAdapter"
+        name="default"
+        />
+
   <!-- Content core views -->
   <!-- Note: the templates are the same since the changes for
          https://github.com/plone/Products.CMFPlone/issues/3177
