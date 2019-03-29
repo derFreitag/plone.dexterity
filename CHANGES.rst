@@ -9,6 +9,16 @@ Changelog
 
 .. towncrier release notes start
 
+2.6.2.post0 (2019-03-29)
+------------------------
+
+New features:
+
+
+- Avoid expensive lookups for other common attributes.
+  [gforcada] (#98)
+
+
 2.6.2 (2018-11-29)
 ------------------
 
