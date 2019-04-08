@@ -47,8 +47,11 @@ from zope.interface.declarations import implementedBy
 from zope.schema.interfaces import IContextAwareDefaultFactory
 from zope.security.interfaces import IPermission
 
+import logging
 import six
 
+
+logger = logging.getLogger('plone.dexterity')
 
 _marker = object()
 _zone = DateTime().timezone()
@@ -351,6 +354,7 @@ class DexterityContent(DAVResourceMixin, PortalContent, PropertyManager,
             name
         )
         if value is not _marker:
+            logger.info('DEFAULT VALUE: obj %s (%s) %s:%s', self, self.portal_type, name, value)
             return value
 
         # do the same for each subtype
@@ -364,6 +368,7 @@ class DexterityContent(DAVResourceMixin, PortalContent, PropertyManager,
                         name
                     )
                     if value is not _marker:
+                        logger.info('DEFAULT VALUE: obj %s (%s - %s) %s:%s', self, self.portal_type, behavior_registration.interface, name, value)
                         return value
 
         raise AttributeError(name)
