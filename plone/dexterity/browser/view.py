@@ -18,9 +18,8 @@ class DefaultView(WidgetsView):
     renders all widgets in display mode.
     """
 
-    if os.environ.get('DEXTERITY_WITHOUT_GETATTR'):
-        def getContent(self):
-            return self.context.aq_explicit
+    def getContent(self):
+        return self.context.aq_explicit
 
     @property
     def schema(self):
