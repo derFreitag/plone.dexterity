@@ -9,8 +9,6 @@ from zope.component.factory import Factory
 from zope.interface import implementer
 from zope.interface.declarations import Implements
 
-import os
-
 
 @implementer(IDexterityFactory)
 class DexterityFactory(Persistent, Factory):
@@ -53,8 +51,7 @@ class DexterityFactory(Persistent, Factory):
         if getattr(obj, 'portal_type', '') != self.portal_type:
             obj.portal_type = self.portal_type
 
-        if os.environ.get('DEXTERITY_WITHOUT_GETATTR'):
-            initialize_missing_attributes(obj)
+        initialize_missing_attributes(obj)
 
         return obj
 
