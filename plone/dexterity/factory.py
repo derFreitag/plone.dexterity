@@ -2,6 +2,7 @@
 from persistent import Persistent
 from plone.dexterity.interfaces import IDexterityFTI
 from plone.dexterity.interfaces import IDexterityFactory
+from plone.dexterity.utils import initialize_missing_attributes
 from plone.dexterity.utils import resolveDottedName
 from zope.component import getUtility
 from zope.component.factory import Factory
@@ -49,6 +50,8 @@ class DexterityFactory(Persistent, Factory):
         # if possible
         if getattr(obj, 'portal_type', '') != self.portal_type:
             obj.portal_type = self.portal_type
+
+        initialize_missing_attributes(obj)
 
         return obj
 
