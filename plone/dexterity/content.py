@@ -381,7 +381,10 @@ class DexterityContent(DAVResourceMixin, PortalContent, PropertyManager,
         # validation can break.
         # See http://bo.geekworld.dk/diazo-bug-on-html5-validation-errors/
         # Remember: \r\n - Windows, \r - OS X, \n - Linux/Unix
-        value = value.replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ')  # noqa
+        try:
+            value = value.replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ')  # noqa
+        except AttributeError:
+            value = value.raw.replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ')  # noqa
 
         # this is a CMF accessor, so should return utf8-encoded
         if six.PY2 and isinstance(value, six.text_type):
