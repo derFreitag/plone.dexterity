@@ -9,6 +9,16 @@ Changelog
 
 .. towncrier release notes start
 
+2.9.1.post1 (2020-04-24)
+------------------------
+
+New features:
+
+
+- Handle description if it is a RichText  field.
+  [gforcada] (#1)
+
+
 2.9.1.post0 (2019-08-02)
 ------------------------
 
