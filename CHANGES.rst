@@ -9,6 +9,25 @@ Changelog
 
 .. towncrier release notes start
 
+2.10.5.post0 (2022-12-16)
+-------------------------
+
+Breaking changes:
+
+
+- With environment variable DEXTERITY_WITHOUT_GETATTR being set,
+  Dexterity content no longer has implicit default value lookup
+  on attribute access
+  [datakurre] (#1)
+
+
+New features:
+
+
+- Remove the need for an environment variable.
+  [gforcada] (#1)
+
+
 2.10.5 (2021-11-25)
 -------------------
 
