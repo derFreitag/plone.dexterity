@@ -2,7 +2,7 @@ from setuptools import find_packages
 from setuptools import setup
 
 
-version = "3.0.2"
+version = "3.0.2.post0"
 
 
 def read(filename):
